@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Pro Trader Members</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: full-height start card (brand, token box, demo path, four honest feature tiles) in front of the same single-column analysis tool. */
+:root {
+  --bg: #070d1a;
+  --surface: #0d1628;
+  --fg: #e8edf5;
+  --muted: #8995ab;
+  --line: #1f2e4d;
+  --accent: #4f9bff;
+  --hot: #ff7a3d;
+  --good: #3fcf8e;
+  --warn: #f0b050;
+  --gold: #f2b94b;
+  --gold-deep: #c98f1e;
+  --up: #2fbf7a;
+  --down: #e0484f;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+body {
+  background: radial-gradient(1200px 600px at 80% -10%, #12234a 0%, transparent 60%), var(--bg);
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 2px 0 0; font-size: 30px; line-height: 1.1; font-weight: 700; text-wrap: balance; }
+h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.pill { font-family: var(--font-data); font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; gap: 6px; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.live { color: var(--good); } .pill.live::before { background: var(--good); }
+.pill.sim { color: var(--warn); } .pill.sim::before { background: var(--warn); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; }
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+select { font: inherit; font-family: var(--font-data); font-size: 14px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 8px; width: 100%; }
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tape { display: flex; gap: 4px; flex-wrap: wrap; font-family: var(--font-data); }
+.tape span { width: 28px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 3px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.tape span.new { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.chart { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.col .pct { font-family: var(--font-data); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.barwrap { position: relative; width: 100%; height: 150px; }
+.barwrap::after { content: ""; position: absolute; left: -3px; right: -3px; bottom: var(--base, 50%); border-top: 1px dashed var(--muted); opacity: 0.7; }
+.bar { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); opacity: 0.55; border-radius: 2px 2px 0 0; }
+.col.hot .bar { background: var(--hot); opacity: 1; }
+.col.cold .bar { opacity: 0.25; }
+.col.hot .pct { color: var(--hot); font-weight: 600; }
+.col .d { font-family: var(--font-data); font-size: 15px; font-weight: 600; }
+.legend { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.stat h2 { margin-bottom: 8px; }
+.row { display: flex; justify-content: space-between; gap: 8px; font-family: var(--font-data); font-size: 14px; font-variant-numeric: tabular-nums; padding: 3px 0; }
+.row span:first-child { color: var(--muted); font-family: var(--font-display); }
+.big { font-family: var(--font-data); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.note { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.verdict p { margin: 0; max-width: 65ch; }
+.verdict p + p { margin-top: 8px; color: var(--muted); font-size: 13px; }
+.foot { margin: 0; font-size: 12px; color: var(--muted); max-width: 65ch; }
+.trade { display: flex; flex-direction: column; gap: 12px; }
+.trade h2 { margin: 0; }
+.trade .note { margin: 0; }
+.trade .bad { color: var(--hot); }
+.trade .ok { color: var(--good); }
+.tgrid { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: end; }
+@media (max-width: 480px) { .tgrid { grid-template-columns: minmax(0, 1fr); } }
+.trade input[type="password"], .trade input[type="number"] { font: inherit; font-family: var(--font-data); font-size: 14px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 8px; width: 100%; min-width: 0; }
+.trade input:focus-visible, .trade button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.trade label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+.trade .check { flex-direction: row; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--fg); }
+.trade .check input { margin-top: 3px; }
+button { font: inherit; font-size: 14px; font-weight: 500; border-radius: 4px; padding: 9px 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.log { font-family: var(--font-data); font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; min-height: 1.5em; }
+.warnbox { border: 1px solid var(--hot); border-radius: 4px; padding: 10px; font-size: 13px; }
+button.primary { background: linear-gradient(180deg, var(--gold), var(--gold-deep)); border-color: var(--gold); color: #1a1303; font-weight: 700; }
+.gate { position: relative; overflow: hidden; margin: -20px calc(-1 * max(16px, env(safe-area-inset-left, 0px))) -40px; padding-block: 36px 28px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); min-height: 100vh; }
+.candles { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 55%; opacity: 0.28; -webkit-mask-image: linear-gradient(to top, #000 30%, transparent); mask-image: linear-gradient(to top, #000 30%, transparent); pointer-events: none; }
+.gate-inner { position: relative; max-width: 440px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.mark { width: 64px; height: 64px; flex: none; }
+.brand-name { font-size: 40px; font-weight: 700; line-height: 1; letter-spacing: 0.01em; }
+.brand-name span { color: var(--gold); }
+.brand-sub { margin-top: 8px; font-size: 13px; letter-spacing: 0.42em; color: var(--muted); }
+.tag { margin: 0; font-size: 18px; line-height: 1.45; }
+.gcard { background: rgba(10, 18, 36, 0.88); border: 1px solid #25407a; border-radius: 14px; padding: 22px 18px; display: flex; flex-direction: column; gap: 14px; text-align: center; }
+.gcard h2 { margin: 0; font-size: 26px; letter-spacing: 0; text-transform: none; color: var(--fg); font-weight: 700; }
+.gcard p { margin: 0; color: var(--muted); font-size: 14px; }
+.gcard input { font: inherit; font-family: var(--font-data); font-size: 14px; color: var(--fg); background: #0a1327; border: 1px solid #2a4a8f; border-radius: 10px; padding: 14px; width: 100%; min-width: 0; }
+.gcard input:focus-visible, .gcard button:focus-visible, .gcard a:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.gcard button { width: 100%; padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 700; }
+.gcard .gold { background: linear-gradient(180deg, var(--gold), var(--gold-deep)); border: 1px solid var(--gold); color: #1a1303; }
+.gcard .outline { background: transparent; border: 1.5px solid #2f6be0; color: var(--fg); }
+.gcard form { display: flex; flex-direction: column; gap: 14px; }
+.gcard .linkbtn { background: none; border: none; color: var(--accent); font-size: 14px; font-weight: 500; padding: 4px; width: auto; align-self: center; }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.tabs button[aria-selected="true"] { border-color: var(--gold); color: var(--gold); }
+.tabs .who { margin-left: auto; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.view { display: flex; flex-direction: column; gap: 16px; }
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 8px; }
+.item:first-child { border-top: none; padding-top: 0; }
+.item .main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 200px; overflow-wrap: anywhere; }
+.item .sub { font-size: 12px; color: var(--muted); }
+.badge { font-family: var(--font-data); font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.badge.admin { color: var(--gold); border-color: var(--gold); }
+.badge.blocked { color: var(--hot); border-color: var(--hot); }
+.form { display: flex; flex-direction: column; gap: 10px; }
+.form label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); }
+.form input[type="text"], .form input[type="file"] { font: inherit; font-size: 14px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 8px; width: 100%; min-width: 0; }
+.form input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fine { font-size: 12px; color: var(--muted); }
+.hdr-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gcard .gmsg { color: var(--hot); min-height: 1.2em; font-size: 13px; }
+.or { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; }
+.or::before, .or::after { content: ""; flex: 1; border-top: 1px solid var(--line); }
+.feats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+.feats li { display: flex; flex-direction: column; gap: 4px; }
+.feats svg { width: 28px; height: 28px; stroke: var(--fg); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.feats b { font-size: 14px; }
+.feats span { font-size: 12px; color: var(--muted); }
+.footline { margin: 0; text-align: center; font-size: 11px; letter-spacing: 0.3em; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .bar { transition: height 0.25s ease; } }
+</style>
+
+<div id="gate" class="gate">
+  <svg id="candles" class="candles" viewBox="0 0 400 200" preserveAspectRatio="xMidYMax slice" aria-hidden="true"></svg>
+  <div class="gate-inner">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+        <defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7cf6a"/><stop offset="1" stop-color="#c98f1e"/></linearGradient></defs>
+        <rect x="8" y="40" width="9" height="16" rx="1.5" fill="url(#gg)"/>
+        <rect x="21" y="30" width="9" height="26" rx="1.5" fill="url(#gg)"/>
+        <rect x="34" y="20" width="9" height="36" rx="1.5" fill="url(#gg)"/>
+        <path d="M10 26 L28 12 L40 14 L54 6" fill="none" stroke="url(#gg)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M46 6 L54 6 L54 14" fill="none" stroke="url(#gg)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <div class="brand-name">PRO <span>TRADER</span></div>
+        <div class="brand-sub">DIGIT ANALYSIS</div>
+      </div>
+    </div>
+    <p class="tag">Count the digits.<br>Know the odds.<br>Stay in control.</p>
+
+    <div class="gcard" id="loginCard">
+      <h2>Welcome Back</h2>
+      <p>Log in to your account to see digit statistics for Deriv volatility indices.</p>
+      <form id="gform" novalidate>
+        <input id="gemail" type="email" autocomplete="username" autocapitalize="off" placeholder="Email" aria-label="Email">
+        <input id="gpass" type="password" autocomplete="current-password" placeholder="Password" aria-label="Password">
+        <button id="gLogin" class="gold" type="submit">Log In</button>
+      </form>
+      <p id="gmsg" class="gmsg" aria-live="polite"></p>
+      <p class="fine">Your email address and sign-up date are visible to the site admin.</p>
+      <div class="or">OR</div>
+      <button id="gSignup" class="outline" type="button">Create an account</button>
+      <button id="gForgot" class="linkbtn" type="button">Forgot password?</button>
+    </div>
+
+    <div class="gcard" id="recoverCard" hidden>
+      <h2>Choose a new password</h2>
+      <p>Enter a new password for your account.</p>
+      <input id="newpass" type="password" autocomplete="new-password" placeholder="New password (8+ characters)" aria-label="New password">
+      <button id="savePass" class="gold" type="button">Save password</button>
+      <p id="rmsg" class="gmsg" aria-live="polite"></p>
+    </div>
+
+    <ul class="feats">
+      <li>
+        <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="4" y="15" width="5" height="9"/><rect x="12" y="9" width="5" height="15"/><rect x="20" y="3" width="5" height="21"/></svg>
+        <b>Digit statistics</b><span>Frequency, over/under and even/odd</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M2 15 H8 L11 6 L16 22 L19 15 H26"/></svg>
+        <b>Live Deriv ticks</b><span>Volatility indices, up to 1000 ticks</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 3 L24 7 V14 C24 20 19 24 14 26 C9 24 4 20 4 14 V7 Z"/><path d="M9.5 14 L13 17.5 L19 11"/></svg>
+        <b>Analysis only</b><span>No trading, no tokens needed</span>
+      </li>
+      <li>
+        <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="6" y="12" width="16" height="12" rx="2"/><path d="M10 12 V8 A4 4 0 0 1 18 8 V12"/></svg>
+        <b>Secure sign-in</b><span>Handled by Supabase, not this page</span>
+      </li>
+    </ul>
+    <p class="footline">KNOW THE ODDS &nbsp;&bull;&nbsp; STAY IN CONTROL</p>
+  </div>
+</div>
+
+<main class="wrap" id="app" hidden>
+  <header>
+    <div>
+      <p class="eyebrow">Digit analysis for Deriv indices</p>
+      <h1>Pro Trader</h1>
+    </div>
+    <div class="hdr-right"><span id="status" class="pill">Connecting</span><button id="logout" type="button">Log out</button></div>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="Sections">
+    <button type="button" data-view="stats" aria-selected="true">Digit analysis</button>
+    <button type="button" data-view="files" aria-selected="false">Downloads</button>
+    <button type="button" data-view="admin" id="tabAdminBtn" aria-selected="false" hidden>Admin</button>
+    <span id="who" class="who"></span>
+  </nav>
+
+  <div id="viewStats" class="view">
+  <section class="controls panel" aria-label="Settings">
+    <label for="symbol">Market
+      <select id="symbol">
+        <option value="R_10">Volatility 10</option>
+        <option value="R_25">Volatility 25</option>
+        <option value="R_50">Volatility 50</option>
+        <option value="R_75" selected>Volatility 75</option>
+        <option value="R_100">Volatility 100</option>
+        <option value="1HZ10V">Volatility 10 (1s)</option>
+        <option value="1HZ25V">Volatility 25 (1s)</option>
+        <option value="1HZ50V">Volatility 50 (1s)</option>
+        <option value="1HZ75V">Volatility 75 (1s)</option>
+        <option value="1HZ100V">Volatility 100 (1s)</option>
+      </select>
+    </label>
+    <label for="win">Sample size
+      <select id="win">
+        <option value="100">Last 100 ticks</option>
+        <option value="250">Last 250 ticks</option>
+        <option value="500" selected>Last 500 ticks</option>
+        <option value="1000">Last 1000 ticks</option>
+      </select>
+    </label>
+    <label for="barrier">Over/Under barrier
+      <select id="barrier">
+        <option>0</option><option>1</option><option>2</option><option>3</option><option selected>4</option>
+        <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="panel">
+    <h2>Last digits (newest on the right)</h2>
+    <div id="tape" class="tape"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Digit frequency, last <span id="nLabel">0</span> ticks</h2>
+    <div id="chart" class="chart"></div>
+    <p class="legend">Dashed line is 10%, the share each digit gets if ticks are random.</p>
+  </section>
+
+  <section class="stats">
+    <div class="panel stat">
+      <h2>Over / Under</h2>
+      <div class="row"><span id="ouOverLabel">Over 4</span><span id="ouOver">0%</span></div>
+      <div class="row"><span id="ouUnderLabel">Under 4</span><span id="ouUnder">0%</span></div>
+      <div class="row"><span id="ouEqLabel">Equal to 4</span><span id="ouEq">0%</span></div>
+    </div>
+    <div class="panel stat">
+      <h2>Even / Odd</h2>
+      <div class="row"><span>Even</span><span id="even">0%</span></div>
+      <div class="row"><span>Odd</span><span id="odd">0%</span></div>
+    </div>
+    <div class="panel stat">
+      <h2>Hot-digit guess test</h2>
+      <div class="big" id="guessRate">–</div>
+      <p class="note" id="guessNote">Guessing the most frequent digit for every new tick. Chance is 10%.</p>
+    </div>
+  </section>
+
+  <section class="panel verdict" aria-live="polite">
+    <h2>Randomness check</h2>
+    <p id="verdict"></p>
+    <p id="verdict2"></p>
+  </section>
+
+  <p class="foot">The charts count past ticks only and cannot predict the next digit. This site does not place trades and never asks for your Deriv login or token. Trading carries risk.</p>
+  </div>
+
+  <section id="viewFiles" class="view panel" hidden>
+    <h2>Downloads</h2>
+    <div id="fileList" class="list" aria-live="polite"></div>
+  </section>
+
+  <section id="viewBlocked" class="view panel" hidden>
+    <h2>Access paused</h2>
+    <p>The site admin has paused your account. Contact them to get access back.</p>
+  </section>
+
+  <div id="viewAdmin" class="view" hidden>
+    <section class="panel">
+      <h2>Members <span id="memberCount"></span></h2>
+      <div id="memberList" class="list"></div>
+    </section>
+    <section class="panel form">
+      <h2>Add a file</h2>
+      <label for="upTitle">Title<input id="upTitle" type="text" maxlength="80"></label>
+      <label for="upDesc">Description (optional)<input id="upDesc" type="text" maxlength="200"></label>
+      <label for="upFile">File (up to 50 MB on the free Supabase plan)<input id="upFile" type="file"></label>
+      <div class="btnrow"><button id="upBtn" class="primary" type="button">Upload</button></div>
+      <p id="upMsg" class="note" aria-live="polite"></p>
+    </section>
+    <section class="panel">
+      <h2>Files</h2>
+      <div id="adminFiles" class="list"></div>
+    </section>
+  </div>
+</main>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0/dist/umd/supabase.min.js"></script>
+<script>
+(function () {
+  var WS_URL = "wss://ws.derivws.com/websockets/v3?app_id=1089";
+  var MAX = 1000;
+  var CHI_LIMIT = 16.92; // chi-square critical value, 9 degrees of freedom, 5% level
+  var st = { digits: [], pip: 2, mode: "connecting", hits: 0, tries: 0, ws: null, sim: null, timer: null };
+
+  var el = function (id) { return document.getElementById(id); };
+  var $symbol = el("symbol"), $win = el("win"), $barrier = el("barrier");
+
+  function digitFrom(quote, pip) {
+    return Number(Number(quote).toFixed(pip).slice(-1));
+  }
+
+  function windowDigits() {
+    var n = Number($win.value);
+    return st.digits.slice(-n);
+  }
+
+  function counts(arr) {
+    var c = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    for (var i = 0; i < arr.length; i++) c[arr[i]]++;
+    return c;
+  }
+
+  function hotDigit(arr) {
+    var c = counts(arr), best = 0;
+    for (var d = 1; d < 10; d++) if (c[d] > c[best]) best = d;
+    return best;
+  }
+
+  function addDigit(d) {
+    var w = windowDigits();
+    if (w.length >= 30) {
+      st.tries++;
+      if (hotDigit(w) === d) st.hits++;
+    }
+    st.digits.push(d);
+    if (st.digits.length > MAX) st.digits.shift();
+    render();
+  }
+
+  function setStatus(mode, text) {
+    st.mode = mode;
+    var s = el("status");
+    s.className = "pill" + (mode === "live" ? " live" : mode === "sim" ? " sim" : "");
+    s.textContent = text;
+  }
+
+  function stopAll() {
+    if (st.timer) { clearTimeout(st.timer); st.timer = null; }
+    if (st.sim) { clearInterval(st.sim); st.sim = null; }
+    if (st.ws) {
+      st.ws.onopen = st.ws.onmessage = st.ws.onerror = st.ws.onclose = null;
+      try { st.ws.close(); } catch (e) {}
+      st.ws = null;
+    }
+  }
+
+  function startSim() {
+    stopAll();
+    st.digits = [];
+    for (var i = 0; i < 500; i++) st.digits.push(Math.floor(Math.random() * 10));
+    st.hits = 0; st.tries = 0;
+    setStatus("sim", "Simulated digits");
+    render();
+    st.sim = setInterval(function () { addDigit(Math.floor(Math.random() * 10)); }, 1000);
+  }
+
+  function connect() {
+    stopAll();
+    st.digits = []; st.hits = 0; st.tries = 0;
+    setStatus("connecting", "Connecting");
+    render();
+    var ws;
+    try { ws = new WebSocket(WS_URL); } catch (e) { startSim(); return; }
+    st.ws = ws;
+    st.timer = setTimeout(function () { if (st.mode !== "live") startSim(); }, 5000);
+    ws.onopen = function () {
+      ws.send(JSON.stringify({
+        ticks_history: $symbol.value, adjust_start_time: 1, count: MAX,
+        end: "latest", style: "ticks", subscribe: 1
+      }));
+    };
+    ws.onmessage = function (ev) {
+      var msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.error) {
+        if (msg.echo_req && msg.echo_req.ticks_history) { startSim(); return; }
+        return;
+      }
+      if (msg.msg_type === "history" && msg.history) {
+        if (msg.pip_size !== undefined) st.pip = msg.pip_size;
+        st.digits = msg.history.prices.map(function (p) { return digitFrom(p, st.pip); });
+        setStatus("live", "Live feed");
+        render();
+      } else if (msg.msg_type === "tick" && msg.tick) {
+        if (msg.tick.pip_size !== undefined) st.pip = msg.tick.pip_size;
+        if (st.mode !== "live") setStatus("live", "Live feed");
+        addDigit(digitFrom(msg.tick.quote, st.pip));
+      }
+    };
+    ws.onerror = function () { if (st.mode !== "live") startSim(); };
+    ws.onclose = function () { if (st.mode === "live") setStatus("connecting", "Reconnecting"); if (st.mode === "live") { st.timer = setTimeout(connect, 2000); } };
+  }
+
+  function pct(n, total) {
+    return total ? (100 * n / total).toFixed(1) + "%" : "–";
+  }
+
+  function render() {
+    var w = windowDigits(), n = w.length, c = counts(w);
+    el("nLabel").textContent = n;
+
+    // tape
+    var tail = st.digits.slice(-24), t = "";
+    for (var i = 0; i < tail.length; i++) {
+      t += '<span' + (i === tail.length - 1 ? ' class="new"' : '') + '>' + tail[i] + '</span>';
+    }
+    el("tape").innerHTML = t;
+
+    // chart
+    var maxC = 0, minC = Infinity, d;
+    for (d = 0; d < 10; d++) { if (c[d] > maxC) maxC = c[d]; if (c[d] < minC) minC = c[d]; }
+    var maxP = n ? 100 * maxC / n : 0;
+    var scale = Math.max(20, Math.ceil(maxP / 5) * 5);
+    var chart = el("chart");
+    chart.style.setProperty("--base", (10 / scale * 100) + "%");
+    var html = "";
+    for (d = 0; d < 10; d++) {
+      var p = n ? 100 * c[d] / n : 0;
+      var cls = "col" + (n && c[d] === maxC ? " hot" : "") + (n && c[d] === minC && c[d] !== maxC ? " cold" : "");
+      html += '<div class="' + cls + '"><span class="pct">' + (n ? p.toFixed(1) : "–") + '</span>' +
+        '<div class="barwrap"><div class="bar" style="height:' + (p / scale * 100) + '%"></div></div>' +
+        '<span class="d">' + d + '</span></div>';
+    }
+    chart.innerHTML = html;
+
+    // over / under
+    var b = Number($barrier.value), over = 0, under = 0, eq = 0, ev = 0;
+    for (d = 0; d < 10; d++) {
+      if (d > b) over += c[d]; else if (d < b) under += c[d]; else eq += c[d];
+      if (d % 2 === 0) ev += c[d];
+    }
+    el("ouOverLabel").textContent = "Over " + b;
+    el("ouUnderLabel").textContent = "Under " + b;
+    el("ouEqLabel").textContent = "Equal to " + b;
+    el("ouOver").textContent = pct(over, n);
+    el("ouUnder").textContent = pct(under, n);
+    el("ouEq").textContent = pct(eq, n);
+    el("even").textContent = pct(ev, n);
+    el("odd").textContent = pct(n - ev, n);
+
+    // guess test
+    if (st.tries > 0) {
+      el("guessRate").textContent = (100 * st.hits / st.tries).toFixed(1) + "%";
+      el("guessNote").textContent = st.hits + " correct out of " + st.tries + " guesses since you opened this page. Chance is 10%.";
+    } else {
+      el("guessRate").textContent = "–";
+      el("guessNote").textContent = "Waiting for new ticks. Each new tick is scored against the hot digit. Chance is 10%.";
+    }
+
+    // verdict
+    if (n < 30) {
+      el("verdict").textContent = "Not enough ticks yet.";
+      el("verdict2").textContent = "";
+    } else {
+      var exp = n / 10, chi = 0;
+      for (d = 0; d < 10; d++) chi += Math.pow(c[d] - exp, 2) / exp;
+      var spread = (100 * (maxC - minC) / n).toFixed(1);
+      if (chi <= CHI_LIMIT) {
+        el("verdict").textContent = "The digit spread in this sample is consistent with random ticks (chi-square " + chi.toFixed(1) + ", limit " + CHI_LIMIT.toFixed(1) + "). The gap between the most and least common digit is " + spread + " points, which is normal noise.";
+      } else {
+        el("verdict").textContent = "This sample looks more uneven than usual (chi-square " + chi.toFixed(1) + ", limit " + CHI_LIMIT.toFixed(1) + "). Uneven samples appear by chance about 1 time in 20, so check a larger sample before reading anything into it.";
+      }
+      el("verdict2").textContent = "Even when one digit is ahead, each new tick is still an independent draw. The hot-digit test above shows how a guess based on this chart performs.";
+    }
+  }
+
+  $symbol.addEventListener("change", connect);
+  $win.addEventListener("change", render);
+  $barrier.addEventListener("change", render);
+
+  // ---- Start screen ----
+  (function drawCandles() {
+    var seed = 11, v = 100, h = "", i;
+    function r() { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; }
+    for (i = 0; i < 40; i++) {
+      var o = v, c = o + (r() - 0.35) * 24;
+      c = Math.max(40, Math.min(165, c));
+      var hi = Math.max(o, c) + r() * 9, lo = Math.min(o, c) - r() * 9;
+      v = c;
+      var col = c >= o ? "var(--up)" : "var(--down)", x = i * 10 + 5;
+      h += '<line x1="' + x + '" x2="' + x + '" y1="' + (200 - hi) + '" y2="' + (200 - lo) + '" style="stroke:' + col + '" stroke-width="1"/>' +
+        '<rect x="' + (x - 2.5) + '" y="' + (200 - Math.max(o, c)) + '" width="5" height="' + Math.max(1, Math.abs(c - o)) + '" style="fill:' + col + '"/>';
+    }
+    el("candles").innerHTML = h;
+  })();
+
+  var CFG = window.APP_CONFIG || {};
+  var SUPABASE_URL = CFG.supabaseUrl || "";
+  var SUPABASE_ANON_KEY = CFG.supabaseAnonKey || "";
+  var sb = null;
+  try {
+    if (SUPABASE_URL.indexOf("https://") === 0 && SUPABASE_ANON_KEY.length > 20 && window.supabase) {
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+  } catch (e) { sb = null; }
+
+  function gmsg(text, good) {
+    var m = el("gmsg");
+    m.textContent = text;
+    m.style.color = good ? "var(--good)" : "var(--hot)";
+  }
+  var me = null;
+  var VIEWS = ["stats", "files", "admin", "blocked"];
+
+  function h(tag, text, cls) {
+    var n = document.createElement(tag);
+    if (text !== undefined && text !== null) n.textContent = text;
+    if (cls) n.className = cls;
+    return n;
+  }
+  function fmtSize(b) {
+    if (!b) return "";
+    if (b < 1048576) return Math.max(1, Math.round(b / 1024)) + " KB";
+    return (b / 1048576).toFixed(1) + " MB";
+  }
+  function fmtDate(d) { try { return new Date(d).toLocaleDateString(); } catch (e) { return ""; } }
+
+  function showView(name) {
+    VIEWS.forEach(function (v) {
+      var n = el("view" + v.charAt(0).toUpperCase() + v.slice(1));
+      if (n) n.hidden = v !== name;
+    });
+    var btns = el("tabs").querySelectorAll("button");
+    for (var i = 0; i < btns.length; i++) btns[i].setAttribute("aria-selected", btns[i].getAttribute("data-view") === name ? "true" : "false");
+    el("tabs").hidden = name === "blocked";
+    if (name === "files") loadFiles();
+    if (name === "admin") loadAdmin();
+  }
+
+  function enterApp() {
+    el("gate").hidden = true;
+    el("app").hidden = false;
+    window.scrollTo(0, 0);
+    if (!sb) return;
+    sb.auth.getUser().then(function (u) {
+      var user = u.data && u.data.user;
+      if (!user) return;
+      return sb.from("profiles").select("*").eq("id", user.id).maybeSingle().then(function (r) {
+        me = r.data || { email: user.email, is_admin: false, blocked: false };
+        el("who").textContent = me.email || user.email || "";
+        el("tabAdminBtn").hidden = !me.is_admin;
+        if (me.blocked) { stopAll(); showView("blocked"); return; }
+        showView("stats");
+        connect();
+      });
+    });
+  }
+  function leaveApp() {
+    stopAll();
+    st.digits = [];
+    me = null;
+    el("app").hidden = true;
+    el("gate").hidden = false;
+  }
+
+  function loadFiles() {
+    var box = el("fileList");
+    box.textContent = "Loading...";
+    sb.from("files").select("*").order("created_at", { ascending: false }).then(function (r) {
+      box.innerHTML = "";
+      if (r.error) { box.textContent = r.error.message; return; }
+      if (!r.data.length) { box.appendChild(h("p", "No files have been added yet.", "fine")); return; }
+      r.data.forEach(function (f) {
+        var row = h("div", null, "item"), main = h("div", null, "main");
+        main.appendChild(h("b", f.title));
+        var meta = [f.description, fmtSize(f.size_bytes)].filter(Boolean).join(" \u00b7 ");
+        if (meta) main.appendChild(h("span", meta, "sub"));
+        var btn = h("button", "Download");
+        btn.type = "button";
+        btn.addEventListener("click", function () {
+          btn.disabled = true;
+          sb.storage.from("downloads").createSignedUrl(f.path, 60, { download: true }).then(function (res) {
+            btn.disabled = false;
+            if (res.error || !res.data) { btn.textContent = "Not available"; return; }
+            window.location.href = res.data.signedUrl;
+          });
+        });
+        row.appendChild(main); row.appendChild(btn);
+        box.appendChild(row);
+      });
+    });
+  }
+
+  function loadAdmin() {
+    var box = el("memberList");
+    box.textContent = "Loading...";
+    sb.from("profiles").select("*").order("created_at", { ascending: false }).limit(1000).then(function (r) {
+      box.innerHTML = "";
+      if (r.error) { box.textContent = r.error.message; return; }
+      el("memberCount").textContent = "(" + r.data.length + ")";
+      r.data.forEach(function (m) {
+        var row = h("div", null, "item"), main = h("div", null, "main");
+        main.appendChild(h("b", m.email));
+        main.appendChild(h("span", "Joined " + fmtDate(m.created_at), "sub"));
+        var side = h("div", null, "btnrow");
+        if (m.is_admin) side.appendChild(h("span", "Admin", "badge admin"));
+        else {
+          side.appendChild(h("span", m.blocked ? "Blocked" : "Active", "badge" + (m.blocked ? " blocked" : "")));
+          var b = h("button", m.blocked ? "Unblock" : "Block");
+          b.type = "button";
+          b.addEventListener("click", function () {
+            b.disabled = true;
+            sb.from("profiles").update({ blocked: !m.blocked }).eq("id", m.id).then(loadAdmin);
+          });
+          side.appendChild(b);
+        }
+        row.appendChild(main); row.appendChild(side);
+        box.appendChild(row);
+      });
+    });
+    var fb = el("adminFiles");
+    sb.from("files").select("*").order("created_at", { ascending: false }).then(function (r) {
+      fb.innerHTML = "";
+      if (r.error) { fb.textContent = r.error.message; return; }
+      if (!r.data.length) { fb.appendChild(h("p", "No files yet.", "fine")); return; }
+      r.data.forEach(function (f) {
+        var row = h("div", null, "item"), main = h("div", null, "main");
+        main.appendChild(h("b", f.title));
+        main.appendChild(h("span", [fmtSize(f.size_bytes), fmtDate(f.created_at)].filter(Boolean).join(" \u00b7 "), "sub"));
+        var del = h("button", "Delete");
+        del.type = "button";
+        del.addEventListener("click", function () {
+          del.disabled = true;
+          sb.storage.from("downloads").remove([f.path]).then(function () {
+            return sb.from("files").delete().eq("id", f.id);
+          }).then(loadAdmin);
+        });
+        row.appendChild(main); row.appendChild(del);
+        fb.appendChild(row);
+      });
+    });
+  }
+
+  function upMsg(text, good) {
+    var m = el("upMsg");
+    m.textContent = text;
+    m.className = "note";
+    m.style.color = good ? "var(--good)" : "var(--hot)";
+  }
+  el("upBtn").addEventListener("click", function () {
+    var f = el("upFile").files[0], title = el("upTitle").value.trim();
+    if (!f || !title) { upMsg("Choose a file and type a title.", false); return; }
+    var path = Date.now() + "-" + f.name.replace(/[^A-Za-z0-9._-]/g, "_");
+    upMsg("Uploading...", true);
+    sb.storage.from("downloads").upload(path, f).then(function (r) {
+      if (r.error) { upMsg(r.error.message, false); return; }
+      return sb.from("files").insert({ title: title, description: el("upDesc").value.trim(), path: path, size_bytes: f.size }).then(function (r2) {
+        if (r2.error) { upMsg(r2.error.message, false); return; }
+        upMsg("Uploaded.", true);
+        el("upTitle").value = ""; el("upDesc").value = ""; el("upFile").value = "";
+        loadAdmin();
+      });
+    });
+  });
+
+  el("tabs").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("button[data-view]") : null;
+    if (b) showView(b.getAttribute("data-view"));
+  });
+
+  function creds() {
+    var email = el("gemail").value.trim(), pw = el("gpass").value;
+    if (!email || email.indexOf("@") < 1) { gmsg("Enter a valid email address."); return null; }
+    return { email: email, password: pw };
+  }
+
+  if (!sb) {
+    gmsg("Sign-in is not set up yet. The site owner needs to add the Supabase project address and public key to config.js.");
+  } else {
+    var recovering = /type=recovery/.test(window.location.hash);
+    if (!recovering) sb.auth.getSession().then(function (r) { if (r.data && r.data.session) enterApp(); });
+    sb.auth.onAuthStateChange(function (evt, session) {
+      if (evt === "PASSWORD_RECOVERY") { showRecovery(); return; }
+      if (!session && !el("app").hidden) leaveApp();
+    });
+    if (recovering) showRecovery();
+  }
+
+  function showRecovery() {
+    el("app").hidden = true;
+    el("gate").hidden = false;
+    el("loginCard").hidden = true;
+    el("recoverCard").hidden = false;
+  }
+  el("savePass").addEventListener("click", function () {
+    var m = el("rmsg"), pw = el("newpass").value;
+    if (pw.length < 8) { m.style.color = "var(--hot)"; m.textContent = "Choose a password of at least 8 characters."; return; }
+    sb.auth.updateUser({ password: pw }).then(function (res) {
+      if (res.error) { m.style.color = "var(--hot)"; m.textContent = res.error.message; return; }
+      el("newpass").value = "";
+      try { history.replaceState(null, "", window.location.pathname); } catch (e) {}
+      el("recoverCard").hidden = true;
+      el("loginCard").hidden = false;
+      enterApp();
+    });
+  });
+
+  el("gform").addEventListener("submit", function (e) {
+    e.preventDefault();
+    if (!sb) { gmsg("Sign-in is not set up yet."); return; }
+    var c = creds(); if (!c) return;
+    if (!c.password) { gmsg("Enter your password."); return; }
+    gmsg("Logging in...", true);
+    sb.auth.signInWithPassword(c).then(function (res) {
+      if (res.error) { gmsg(res.error.message); return; }
+      el("gpass").value = ""; gmsg("");
+      enterApp();
+    });
+  });
+
+  el("gSignup").addEventListener("click", function () {
+    if (!sb) { gmsg("Sign-in is not set up yet."); return; }
+    var c = creds(); if (!c) return;
+    if (c.password.length < 8) { gmsg("Choose a password of at least 8 characters."); return; }
+    gmsg("Creating account...", true);
+    sb.auth.signUp(c).then(function (res) {
+      if (res.error) { gmsg(res.error.message); return; }
+      el("gpass").value = "";
+      if (res.data && res.data.session) { gmsg(""); enterApp(); }
+      else gmsg("Account created. Check your email to confirm it, then log in.", true);
+    });
+  });
+
+  el("gForgot").addEventListener("click", function () {
+    if (!sb) { gmsg("Sign-in is not set up yet."); return; }
+    var email = el("gemail").value.trim();
+    if (!email || email.indexOf("@") < 1) { gmsg("Type your email above, then tap Forgot password again."); return; }
+    sb.auth.resetPasswordForEmail(email).then(function (res) {
+      if (res.error) gmsg(res.error.message);
+      else gmsg("If that email has an account, a reset link is on its way.", true);
+    });
+  });
+
+  el("logout").addEventListener("click", function () {
+    if (sb) sb.auth.signOut(); else leaveApp();
+  });
+
+  render();
+})();
+</script>
+</html>
