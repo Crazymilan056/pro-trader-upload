@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Digit Tape</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* Layout: one narrow column, summary first (status + digit tape), then frequency chart, then three small stat blocks and a plain verdict. */
+:root {
+  --bg: #eceff2;
+  --surface: #ffffff;
+  --fg: #14181d;
+  --muted: #5a6672;
+  --line: #d3d9df;
+  --accent: #1d5fd1;
+  --hot: #c4470c;
+  --good: #137a4b;
+  --warn: #a15c00;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1318; --surface: #161d24; --fg: #e5e9ed; --muted: #8995a1; --line: #2a333c;
+    --accent: #6aa8ff; --hot: #ff8f55; --good: #4cc78a; --warn: #f0b050;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1318; --surface: #161d24; --fg: #e5e9ed; --muted: #8995a1; --line: #2a333c;
+  --accent: #6aa8ff; --hot: #ff8f55; --good: #4cc78a; --warn: #f0b050;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+h1 { margin: 2px 0 0; font-size: 30px; line-height: 1.1; font-weight: 700; text-wrap: balance; }
+h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.pill { font-family: var(--font-data); font-size: 12px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; gap: 6px; }
+.pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+.pill.live { color: var(--good); } .pill.live::before { background: var(--good); }
+.pill.sim { color: var(--warn); } .pill.sim::before { background: var(--warn); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px; min-width: 0; }
+.controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+select { font: inherit; font-family: var(--font-data); font-size: 14px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 8px; width: 100%; }
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tape { display: flex; gap: 4px; flex-wrap: wrap; font-family: var(--font-data); }
+.tape span { width: 28px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 3px; font-size: 16px; font-variant-numeric: tabular-nums; }
+.tape span.new { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 600; }
+.chart { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+.col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.col .pct { font-family: var(--font-data); font-size: 11px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.barwrap { position: relative; width: 100%; height: 150px; }
+.barwrap::after { content: ""; position: absolute; left: -3px; right: -3px; bottom: var(--base, 50%); border-top: 1px dashed var(--muted); opacity: 0.7; }
+.bar { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); opacity: 0.55; border-radius: 2px 2px 0 0; }
+.col.hot .bar { background: var(--hot); opacity: 1; }
+.col.cold .bar { opacity: 0.25; }
+.col.hot .pct { color: var(--hot); font-weight: 600; }
+.col .d { font-family: var(--font-data); font-size: 15px; font-weight: 600; }
+.legend { margin: 10px 0 0; font-size: 12px; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.stat h2 { margin-bottom: 8px; }
+.row { display: flex; justify-content: space-between; gap: 8px; font-family: var(--font-data); font-size: 14px; font-variant-numeric: tabular-nums; padding: 3px 0; }
+.row span:first-child { color: var(--muted); font-family: var(--font-display); }
+.big { font-family: var(--font-data); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.note { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+.verdict p { margin: 0; max-width: 65ch; }
+.verdict p + p { margin-top: 8px; color: var(--muted); font-size: 13px; }
+.foot { margin: 0; font-size: 12px; color: var(--muted); max-width: 65ch; }
+[hidden] { display: none !important; }
+.trade { display: flex; flex-direction: column; gap: 12px; }
+.trade h2 { margin: 0; }
+.trade .note { margin: 0; }
+.trade .bad { color: var(--hot); }
+.trade .ok { color: var(--good); }
+.tgrid { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: end; }
+@media (max-width: 480px) { .tgrid { grid-template-columns: minmax(0, 1fr); } }
+.trade input[type="password"], .trade input[type="number"] { font: inherit; font-family: var(--font-data); font-size: 14px; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; padding: 8px; width: 100%; min-width: 0; }
+.trade input:focus-visible, .trade button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.trade label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+.trade .check { flex-direction: row; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--fg); }
+.trade .check input { margin-top: 3px; }
+button { font: inherit; font-size: 14px; font-weight: 500; border-radius: 4px; padding: 9px 14px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); cursor: pointer; }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; }
+.log { font-family: var(--font-data); font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; min-height: 1.5em; }
+.warnbox { border: 1px solid var(--hot); border-radius: 4px; padding: 10px; font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { .bar { transition: height 0.25s ease; } }
+</style>
+
+<main class="wrap">
+  <header>
+    <div>
+      <p class="eyebrow">Deriv synthetic indices</p>
+      <h1>Digit Tape</h1>
+    </div>
+    <span id="status" class="pill">Connecting</span>
+  </header>
+
+  <section class="controls panel" aria-label="Settings">
+    <label for="symbol">Market
+      <select id="symbol">
+        <option value="R_10">Volatility 10</option>
+        <option value="R_25">Volatility 25</option>
+        <option value="R_50">Volatility 50</option>
+        <option value="R_75" selected>Volatility 75</option>
+        <option value="R_100">Volatility 100</option>
+        <option value="1HZ10V">Volatility 10 (1s)</option>
+        <option value="1HZ25V">Volatility 25 (1s)</option>
+        <option value="1HZ50V">Volatility 50 (1s)</option>
+        <option value="1HZ75V">Volatility 75 (1s)</option>
+        <option value="1HZ100V">Volatility 100 (1s)</option>
+      </select>
+    </label>
+    <label for="win">Sample size
+      <select id="win">
+        <option value="100">Last 100 ticks</option>
+        <option value="250">Last 250 ticks</option>
+        <option value="500" selected>Last 500 ticks</option>
+        <option value="1000">Last 1000 ticks</option>
+      </select>
+    </label>
+    <label for="barrier">Over/Under barrier
+      <select id="barrier">
+        <option>0</option><option>1</option><option>2</option><option>3</option><option selected>4</option>
+        <option>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
+      </select>
+    </label>
+  </section>
+
+  <section class="panel">
+    <h2>Last digits (newest on the right)</h2>
+    <div id="tape" class="tape"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Digit frequency, last <span id="nLabel">0</span> ticks</h2>
+    <div id="chart" class="chart"></div>
+    <p class="legend">Dashed line is 10%, the share each digit gets if ticks are random.</p>
+  </section>
+
+  <section class="stats">
+    <div class="panel stat">
+      <h2>Over / Under</h2>
+      <div class="row"><span id="ouOverLabel">Over 4</span><span id="ouOver">0%</span></div>
+      <div class="row"><span id="ouUnderLabel">Under 4</span><span id="ouUnder">0%</span></div>
+      <div class="row"><span id="ouEqLabel">Equal to 4</span><span id="ouEq">0%</span></div>
+    </div>
+    <div class="panel stat">
+      <h2>Even / Odd</h2>
+      <div class="row"><span>Even</span><span id="even">0%</span></div>
+      <div class="row"><span>Odd</span><span id="odd">0%</span></div>
+    </div>
+    <div class="panel stat">
+      <h2>Hot-digit guess test</h2>
+      <div class="big" id="guessRate">–</div>
+      <p class="note" id="guessNote">Guessing the most frequent digit for every new tick. Chance is 10%.</p>
+    </div>
+  </section>
+
+  <section class="panel verdict" aria-live="polite">
+    <h2>Randomness check</h2>
+    <p id="verdict"></p>
+    <p id="verdict2"></p>
+  </section>
+
+  <section class="panel trade" aria-label="Auto-trade">
+    <h2>Auto-trade (optional)</h2>
+    <div class="warnbox">The digits are random, so this loses money over time. Use a Demo account token first. A real money account stays locked until you tick an extra box.</div>
+    <p class="note">Create a token at app.deriv.com/account/api-token with only the Read and Trade scopes. Never tick Payments or Admin. The token stays in this page's memory, is sent only to Deriv, and is gone when you close the page.</p>
+    <div class="tgrid">
+      <label for="token">API token
+        <input id="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste token here">
+      </label>
+      <button id="authBtn" type="button">Connect account</button>
+      <button id="forgetBtn" type="button">Forget token</button>
+    </div>
+    <p class="note" id="acct">Not connected. Needs the live feed, so open this file in Chrome.</p>
+    <div class="controls">
+      <label for="ctype">Trade type
+        <select id="ctype">
+          <option value="DIGITDIFF">Differs from digit</option>
+          <option value="DIGITMATCH">Matches digit</option>
+          <option value="DIGITOVER">Over digit</option>
+          <option value="DIGITUNDER">Under digit</option>
+          <option value="DIGITEVEN">Even</option>
+          <option value="DIGITODD">Odd</option>
+        </select>
+      </label>
+      <label for="tdigit">Digit
+        <select id="tdigit">
+          <option>0</option><option>1</option><option>2</option><option>3</option><option>4</option>
+          <option selected>5</option><option>6</option><option>7</option><option>8</option><option>9</option>
+        </select>
+      </label>
+      <label for="stake">Stake per trade
+        <input id="stake" type="number" min="0.35" step="0.01" value="0.35" inputmode="decimal">
+      </label>
+      <label for="maxLoss">Stop at total loss
+        <input id="maxLoss" type="number" min="0.35" step="0.01" value="3" inputmode="decimal">
+      </label>
+      <label for="takeProfit">Stop at total profit
+        <input id="takeProfit" type="number" min="0.35" step="0.01" value="3" inputmode="decimal">
+      </label>
+      <label for="maxTrades">Max number of trades
+        <input id="maxTrades" type="number" min="1" step="1" value="20" inputmode="numeric">
+      </label>
+      <label for="maxStreak">Stop after this many losses in a row
+        <input id="maxStreak" type="number" min="1" step="1" value="4" inputmode="numeric">
+      </label>
+    </div>
+    <label class="check" for="ack">
+      <input id="ack" type="checkbox">
+      <span>I understand every trade can lose its full stake, and these limits are my own choice.</span>
+    </label>
+    <label class="check" for="realAck" id="realAckBox" hidden>
+      <input id="realAck" type="checkbox">
+      <span>This is a REAL money account. I want to trade real money, not a Demo account.</span>
+    </label>
+    <div class="btnrow">
+      <button id="startBtn" class="primary" type="button" disabled>Start trading</button>
+      <button id="stopBtn" type="button" disabled>Stop</button>
+    </div>
+    <p class="note" id="tstatus">Idle. Trades one tick at a time, one at a time, with a flat stake and no stake increases after losses.</p>
+    <div class="row"><span>Profit / loss this run</span><span id="pl">0.00</span></div>
+    <div class="row"><span>Result</span><span id="tcount">0 trades, 0 wins</span></div>
+    <div class="row"><span>Win rate vs chance</span><span id="wrate">no trades yet</span></div>
+    <div class="btnrow"><button id="csvBtn" type="button" disabled>Download all results (CSV)</button></div>
+    <div class="log" id="log" aria-live="polite"></div>
+  </section>
+
+  <p class="foot">The charts only count past ticks and cannot predict the next digit. Digit Tape uses Deriv's public tick feed. It asks for an API token only if you choose to use auto-trade above.</p>
+</main>
+
+<script>
+(function () {
+  var WS_URL = "wss://ws.derivws.com/websockets/v3?app_id=1089";
+  var MAX = 1000;
+  var CHI_LIMIT = 16.92; // chi-square critical value, 9 degrees of freedom, 5% level
+  var st = { digits: [], pip: 2, mode: "connecting", hits: 0, tries: 0, ws: null, sim: null, timer: null };
+
+  var el = function (id) { return document.getElementById(id); };
+  var $symbol = el("symbol"), $win = el("win"), $barrier = el("barrier");
+
+  function digitFrom(quote, pip) {
+    return Number(Number(quote).toFixed(pip).slice(-1));
+  }
+
+  function windowDigits() {
+    var n = Number($win.value);
+    return st.digits.slice(-n);
+  }
+
+  function counts(arr) {
+    var c = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    for (var i = 0; i < arr.length; i++) c[arr[i]]++;
+    return c;
+  }
+
+  function hotDigit(arr) {
+    var c = counts(arr), best = 0;
+    for (var d = 1; d < 10; d++) if (c[d] > c[best]) best = d;
+    return best;
+  }
+
+  function addDigit(d) {
+    var w = windowDigits();
+    if (w.length >= 30) {
+      st.tries++;
+      if (hotDigit(w) === d) st.hits++;
+    }
+    st.digits.push(d);
+    if (st.digits.length > MAX) st.digits.shift();
+    render();
+  }
+
+  function setStatus(mode, text) {
+    st.mode = mode;
+    var s = el("status");
+    s.className = "pill" + (mode === "live" ? " live" : mode === "sim" ? " sim" : "");
+    s.textContent = text;
+  }
+
+  function stopAll() {
+    if (st.timer) { clearTimeout(st.timer); st.timer = null; }
+    if (st.sim) { clearInterval(st.sim); st.sim = null; }
+    if (st.ws) {
+      st.ws.onopen = st.ws.onmessage = st.ws.onerror = st.ws.onclose = null;
+      try { st.ws.close(); } catch (e) {}
+      st.ws = null;
+    }
+  }
+
+  function startSim() {
+    stopAll();
+    st.digits = [];
+    for (var i = 0; i < 500; i++) st.digits.push(Math.floor(Math.random() * 10));
+    st.hits = 0; st.tries = 0;
+    setStatus("sim", "Simulated digits");
+    render();
+    st.sim = setInterval(function () { addDigit(Math.floor(Math.random() * 10)); }, 1000);
+  }
+
+  function connect() {
+    stopAll();
+    if (tr.running) { tr.running = false; trMsg("tstatus", "Stopped: the feed was reconnected."); }
+    tr.busy = false; tr.authed = false;
+    st.digits = []; st.hits = 0; st.tries = 0;
+    setStatus("connecting", "Connecting");
+    render();
+    var ws;
+    try { ws = new WebSocket(WS_URL); } catch (e) { startSim(); return; }
+    st.ws = ws;
+    st.timer = setTimeout(function () { if (st.mode !== "live") startSim(); }, 5000);
+    ws.onopen = function () {
+      ws.send(JSON.stringify({
+        ticks_history: $symbol.value, adjust_start_time: 1, count: MAX,
+        end: "latest", style: "ticks", subscribe: 1
+      }));
+      if (tr.token) ws.send(JSON.stringify({ authorize: tr.token }));
+    };
+    ws.onmessage = function (ev) {
+      var msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.error) {
+        if (msg.echo_req && msg.echo_req.ticks_history) { startSim(); return; }
+        onTradeError(msg);
+        return;
+      }
+      if (msg.msg_type === "authorize" || msg.msg_type === "buy" || msg.msg_type === "proposal_open_contract") { onTradeMsg(msg); return; }
+      if (msg.msg_type === "history" && msg.history) {
+        if (msg.pip_size !== undefined) st.pip = msg.pip_size;
+        st.digits = msg.history.prices.map(function (p) { return digitFrom(p, st.pip); });
+        setStatus("live", "Live feed");
+        render();
+      } else if (msg.msg_type === "tick" && msg.tick) {
+        if (msg.tick.pip_size !== undefined) st.pip = msg.tick.pip_size;
+        if (st.mode !== "live") setStatus("live", "Live feed");
+        addDigit(digitFrom(msg.tick.quote, st.pip));
+        maybeTrade();
+      }
+    };
+    ws.onerror = function () { if (st.mode !== "live") startSim(); };
+    ws.onclose = function () { if (st.mode === "live") setStatus("connecting", "Reconnecting"); if (st.mode === "live") { st.timer = setTimeout(connect, 2000); } };
+  }
+
+  // ---- Auto-trade ----
+  var tr = { token: null, authed: false, running: false, busy: false, pl: 0, n: 0, wins: 0, virtual: true, currency: "USD", settled: {}, lines: [], lastType: "", lastP: 0.5, streak: 0, hist: [] };
+
+  function trMsg(id, text, cls) {
+    var e = el(id);
+    e.textContent = text;
+    e.className = "note" + (cls ? " " + cls : "");
+  }
+
+  function logLine(text) {
+    tr.lines.unshift(text);
+    if (tr.lines.length > 10) tr.lines.pop();
+    var box = el("log");
+    box.innerHTML = "";
+    tr.lines.forEach(function (l) {
+      var d = document.createElement("div");
+      d.textContent = l;
+      box.appendChild(d);
+    });
+  }
+
+  function send(obj) {
+    if (st.ws && st.ws.readyState === 1) { st.ws.send(JSON.stringify(obj)); return true; }
+    return false;
+  }
+
+  function needsBarrier(type) {
+    return type === "DIGITDIFF" || type === "DIGITMATCH" || type === "DIGITOVER" || type === "DIGITUNDER";
+  }
+
+  function chanceOf(type, d) {
+    d = Number(d);
+    if (type === "DIGITDIFF") return 0.9;
+    if (type === "DIGITMATCH") return 0.1;
+    if (type === "DIGITOVER") return (9 - d) / 10;
+    if (type === "DIGITUNDER") return d / 10;
+    return 0.5;
+  }
+
+  function updateTradeUi() {
+    var realNeeded = tr.authed && !tr.virtual;
+    el("realAckBox").hidden = !realNeeded;
+    el("startBtn").disabled = !(tr.authed && el("ack").checked && (!realNeeded || el("realAck").checked) && st.mode === "live" && !tr.running);
+    el("csvBtn").disabled = !tr.hist.length;
+    if (tr.hist.length) {
+      var w = tr.hist.filter(function (h) { return h.profit > 0; }).length;
+      var exp = tr.hist.reduce(function (a, h) { return a + h.p; }, 0) / tr.hist.length;
+      el("wrate").textContent = (100 * w / tr.hist.length).toFixed(1) + "% won, " + (100 * exp).toFixed(1) + "% expected by chance (" + tr.hist.length + " trades)";
+    }
+    el("stopBtn").disabled = !tr.running;
+    el("tdigit").disabled = !needsBarrier(el("ctype").value);
+    var pl = el("pl");
+    pl.textContent = (tr.pl >= 0 ? "+" : "") + tr.pl.toFixed(2) + " " + tr.currency;
+    pl.style.color = tr.pl > 0 ? "var(--good)" : tr.pl < 0 ? "var(--hot)" : "";
+    el("tcount").textContent = tr.n + " trades, " + tr.wins + " wins";
+  }
+
+  function stopTrading(reason) {
+    tr.running = false;
+    trMsg("tstatus", reason);
+    updateTradeUi();
+  }
+
+  function maybeTrade() {
+    if (!tr.running || tr.busy || st.mode !== "live") return;
+    var maxLoss = Number(el("maxLoss").value), tp = Number(el("takeProfit").value), maxT = Number(el("maxTrades").value);
+    if (tr.pl <= -maxLoss) { stopTrading("Stopped: total loss limit reached."); return; }
+    if (tr.pl >= tp) { stopTrading("Stopped: profit target reached."); return; }
+    if (tr.n >= maxT) { stopTrading("Stopped: trade limit reached."); return; }
+    var maxS = Number(el("maxStreak").value);
+    if (maxS >= 1 && tr.streak >= maxS) { stopTrading("Stopped: " + tr.streak + " losses in a row. Take a break."); return; }
+    var type = el("ctype").value, stake = Number(el("stake").value);
+    var params = { amount: stake, basis: "stake", contract_type: type, currency: tr.currency, duration: 1, duration_unit: "t", symbol: $symbol.value };
+    if (needsBarrier(type)) params.barrier = String(el("tdigit").value);
+    tr.lastType = type + (needsBarrier(type) ? " " + params.barrier : "");
+    tr.lastP = chanceOf(type, el("tdigit").value);
+    tr.busy = true;
+    if (!send({ buy: 1, price: stake, parameters: params })) {
+      tr.busy = false;
+      stopTrading("Stopped: connection lost.");
+    }
+  }
+
+  function onTradeError(msg) {
+    var text = msg.error && msg.error.message ? msg.error.message : "Unknown error";
+    if (msg.msg_type === "authorize") {
+      tr.authed = false; tr.token = null;
+      trMsg("acct", "Token rejected: " + text, "bad");
+    } else if (msg.msg_type === "buy") {
+      tr.busy = false;
+      logLine("Trade refused: " + text);
+      stopTrading("Stopped: Deriv refused a trade (" + text + ").");
+    } else {
+      logLine("Error: " + text);
+    }
+    updateTradeUi();
+  }
+
+  function onTradeMsg(msg) {
+    if (msg.msg_type === "authorize") {
+      var a = msg.authorize;
+      tr.authed = true;
+      tr.virtual = !!a.is_virtual;
+      tr.currency = a.currency || "USD";
+      trMsg("acct", a.loginid + " (" + (tr.virtual ? "Demo account" : "REAL money account") + "), balance " + a.balance + " " + tr.currency, tr.virtual ? "ok" : "bad");
+    } else if (msg.msg_type === "buy") {
+      var b = msg.buy;
+      logLine("Bought " + tr.lastType + " for " + b.buy_price + " " + tr.currency);
+      send({ proposal_open_contract: 1, contract_id: b.contract_id, subscribe: 1 });
+    } else if (msg.msg_type === "proposal_open_contract") {
+      var p = msg.proposal_open_contract;
+      if (p && p.is_sold && !tr.settled[p.contract_id]) {
+        tr.settled[p.contract_id] = true;
+        var profit = Number(p.profit);
+        tr.pl += profit; tr.n++;
+        if (profit > 0) { tr.wins++; tr.streak = 0; } else tr.streak++;
+        tr.hist.push({ time: new Date().toISOString(), market: $symbol.value, trade: tr.lastType, account: tr.virtual ? "demo" : "real", profit: profit, p: tr.lastP });
+        tr.busy = false;
+        logLine((profit >= 0 ? "Won +" : "Lost ") + profit.toFixed(2) + " " + tr.currency);
+        if (msg.subscription && msg.subscription.id) send({ forget: msg.subscription.id });
+      }
+    }
+    updateTradeUi();
+  }
+
+  el("authBtn").addEventListener("click", function () {
+    var t = el("token").value.trim();
+    if (!t) { trMsg("acct", "Paste a token first.", "bad"); return; }
+    if (st.mode !== "live") { trMsg("acct", "Trading needs the live feed. Open this file in Chrome with internet access.", "bad"); return; }
+    tr.token = t;
+    el("token").value = "";
+    trMsg("acct", "Connecting account...");
+    send({ authorize: t });
+  });
+
+  el("forgetBtn").addEventListener("click", function () {
+    send({ logout: 1 });
+    tr.token = null; tr.authed = false; tr.running = false; tr.busy = false;
+    el("token").value = "";
+    trMsg("acct", "Token removed from this page. Delete it in your Deriv account settings too.");
+    trMsg("tstatus", "Idle.");
+    updateTradeUi();
+  });
+
+  el("startBtn").addEventListener("click", function () {
+    var stake = Number(el("stake").value), maxLoss = Number(el("maxLoss").value), tp = Number(el("takeProfit").value), maxT = Number(el("maxTrades").value);
+    if (!(stake > 0) || !(maxLoss > 0) || !(tp > 0) || !(maxT >= 1)) { trMsg("tstatus", "Enter a stake, both limits and a trade count above zero.", "bad"); return; }
+    if (stake > maxLoss) { trMsg("tstatus", "The stake is larger than your loss limit. Lower the stake or raise the limit.", "bad"); return; }
+    tr.pl = 0; tr.n = 0; tr.wins = 0; tr.streak = 0; tr.busy = false; tr.settled = {};
+    tr.running = true;
+    trMsg("tstatus", "Trading on " + $symbol.options[$symbol.selectedIndex].text + ". Press Stop at any time.");
+    updateTradeUi();
+    maybeTrade();
+  });
+
+  el("stopBtn").addEventListener("click", function () { stopTrading("Stopped by you. A trade already placed will still settle."); });
+  el("ack").addEventListener("change", updateTradeUi);
+  el("realAck").addEventListener("change", updateTradeUi);
+  el("csvBtn").addEventListener("click", function () {
+    var rows = ["time,market,trade,account,profit,chance_of_win"].concat(tr.hist.map(function (h) {
+      return [h.time, h.market, h.trade, h.account, h.profit.toFixed(2), h.p].join(",");
+    }));
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([rows.join("\n")], { type: "text/csv" }));
+    a.download = "digit-trades.csv";
+    a.click();
+  });
+  el("ctype").addEventListener("change", updateTradeUi);
+
+  function pct(n, total) {
+    return total ? (100 * n / total).toFixed(1) + "%" : "–";
+  }
+
+  function render() {
+    var w = windowDigits(), n = w.length, c = counts(w);
+    el("nLabel").textContent = n;
+
+    // tape
+    var tail = st.digits.slice(-24), t = "";
+    for (var i = 0; i < tail.length; i++) {
+      t += '<span' + (i === tail.length - 1 ? ' class="new"' : '') + '>' + tail[i] + '</span>';
+    }
+    el("tape").innerHTML = t;
+
+    // chart
+    var maxC = 0, minC = Infinity, d;
+    for (d = 0; d < 10; d++) { if (c[d] > maxC) maxC = c[d]; if (c[d] < minC) minC = c[d]; }
+    var maxP = n ? 100 * maxC / n : 0;
+    var scale = Math.max(20, Math.ceil(maxP / 5) * 5);
+    var chart = el("chart");
+    chart.style.setProperty("--base", (10 / scale * 100) + "%");
+    var html = "";
+    for (d = 0; d < 10; d++) {
+      var p = n ? 100 * c[d] / n : 0;
+      var cls = "col" + (n && c[d] === maxC ? " hot" : "") + (n && c[d] === minC && c[d] !== maxC ? " cold" : "");
+      html += '<div class="' + cls + '"><span class="pct">' + (n ? p.toFixed(1) : "–") + '</span>' +
+        '<div class="barwrap"><div class="bar" style="height:' + (p / scale * 100) + '%"></div></div>' +
+        '<span class="d">' + d + '</span></div>';
+    }
+    chart.innerHTML = html;
+
+    // over / under
+    var b = Number($barrier.value), over = 0, under = 0, eq = 0, ev = 0;
+    for (d = 0; d < 10; d++) {
+      if (d > b) over += c[d]; else if (d < b) under += c[d]; else eq += c[d];
+      if (d % 2 === 0) ev += c[d];
+    }
+    el("ouOverLabel").textContent = "Over " + b;
+    el("ouUnderLabel").textContent = "Under " + b;
+    el("ouEqLabel").textContent = "Equal to " + b;
+    el("ouOver").textContent = pct(over, n);
+    el("ouUnder").textContent = pct(under, n);
+    el("ouEq").textContent = pct(eq, n);
+    el("even").textContent = pct(ev, n);
+    el("odd").textContent = pct(n - ev, n);
+
+    // guess test
+    if (st.tries > 0) {
+      el("guessRate").textContent = (100 * st.hits / st.tries).toFixed(1) + "%";
+      el("guessNote").textContent = st.hits + " correct out of " + st.tries + " guesses since you opened this page. Chance is 10%.";
+    } else {
+      el("guessRate").textContent = "–";
+      el("guessNote").textContent = "Waiting for new ticks. Each new tick is scored against the hot digit. Chance is 10%.";
+    }
+
+    // verdict
+    if (n < 30) {
+      el("verdict").textContent = "Not enough ticks yet.";
+      el("verdict2").textContent = "";
+    } else {
+      var exp = n / 10, chi = 0;
+      for (d = 0; d < 10; d++) chi += Math.pow(c[d] - exp, 2) / exp;
+      var spread = (100 * (maxC - minC) / n).toFixed(1);
+      if (chi <= CHI_LIMIT) {
+        el("verdict").textContent = "The digit spread in this sample is consistent with random ticks (chi-square " + chi.toFixed(1) + ", limit " + CHI_LIMIT.toFixed(1) + "). The gap between the most and least common digit is " + spread + " points, which is normal noise.";
+      } else {
+        el("verdict").textContent = "This sample looks more uneven than usual (chi-square " + chi.toFixed(1) + ", limit " + CHI_LIMIT.toFixed(1) + "). Uneven samples appear by chance about 1 time in 20, so check a larger sample before reading anything into it.";
+      }
+      el("verdict2").textContent = "Even when one digit is ahead, each new tick is still an independent draw. The hot-digit test above shows how a guess based on this chart performs.";
+    }
+    updateTradeUi();
+  }
+
+  $symbol.addEventListener("change", connect);
+  $win.addEventListener("change", render);
+  $barrier.addEventListener("change", render);
+
+  render();
+  connect();
+})();
+</script>
+</html>
