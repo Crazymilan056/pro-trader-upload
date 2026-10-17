@@ -249,9 +249,11 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 
 <script>
 (function () {
-  var WS_URL = "wss://ws.derivws.com/websockets/v3?app_id=1089";
+  var WS_URLS = ["wss://api.derivws.com/trading/v1/options/ws/public", "wss://ws.derivws.com/websockets/v3?app_id=1089"];
+  var urlIdx = 0;
   var MAX = 1000;
   var CHI_LIMIT = 16.92; // chi-square critical value, 9 degrees of freedom, 5% level
+  var WS_TRADE_OK = function () { return urlIdx === 1; };
   var st = { digits: [], pip: 2, mode: "connecting", hits: 0, tries: 0, ws: null, sim: null, timer: null };
 
   var el = function (id) { return document.getElementById(id); };
@@ -316,7 +318,10 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     st.sim = setInterval(function () { addDigit(Math.floor(Math.random() * 10)); }, 1000);
   }
 
-  function connect() {
+  function connect(idx) {
+    if (typeof idx !== "number") idx = urlIdx;
+    var isLast = idx >= WS_URLS.length - 1;
+    function next() { if (!isLast) connect(idx + 1); else startSim(); }
     stopAll();
     if (tr.running) { tr.running = false; trMsg("tstatus", "Stopped: the feed was reconnected."); }
     tr.busy = false; tr.authed = false;
@@ -324,9 +329,9 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     setStatus("connecting", "Connecting");
     render();
     var ws;
-    try { ws = new WebSocket(WS_URL); } catch (e) { startSim(); return; }
+    try { ws = new WebSocket(WS_URLS[idx]); } catch (e) { next(); return; }
     st.ws = ws;
-    st.timer = setTimeout(function () { if (st.mode !== "live") startSim(); }, 5000);
+    st.timer = setTimeout(function () { if (st.mode !== "live") next(); }, 4000);
     ws.onopen = function () {
       ws.send(JSON.stringify({
         ticks_history: $symbol.value, adjust_start_time: 1, count: MAX,
@@ -338,7 +343,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       var msg;
       try { msg = JSON.parse(ev.data); } catch (e) { return; }
       if (msg.error) {
-        if (msg.echo_req && msg.echo_req.ticks_history) { startSim(); return; }
+        if (msg.echo_req && msg.echo_req.ticks_history) { next(); return; }
         onTradeError(msg);
         return;
       }
@@ -346,16 +351,16 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
       if (msg.msg_type === "history" && msg.history) {
         if (msg.pip_size !== undefined) st.pip = msg.pip_size;
         st.digits = msg.history.prices.map(function (p) { return digitFrom(p, st.pip); });
-        setStatus("live", "Live feed");
+        urlIdx = idx; setStatus("live", "Live feed");
         render();
       } else if (msg.msg_type === "tick" && msg.tick) {
         if (msg.tick.pip_size !== undefined) st.pip = msg.tick.pip_size;
-        if (st.mode !== "live") setStatus("live", "Live feed");
+        if (st.mode !== "live") { urlIdx = idx; setStatus("live", "Live feed"); }
         addDigit(digitFrom(msg.tick.quote, st.pip));
         maybeTrade();
       }
     };
-    ws.onerror = function () { if (st.mode !== "live") startSim(); };
+    ws.onerror = function () { if (st.mode !== "live") next(); };
     ws.onclose = function () { if (st.mode === "live") setStatus("connecting", "Reconnecting"); if (st.mode === "live") { st.timer = setTimeout(connect, 2000); } };
   }
 
@@ -488,6 +493,7 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
     var t = el("token").value.trim();
     if (!t) { trMsg("acct", "Paste a token first.", "bad"); return; }
     if (st.mode !== "live") { trMsg("acct", "Trading needs the live feed. Open this file in Chrome with internet access.", "bad"); return; }
+    if (!WS_TRADE_OK()) { trMsg("acct", "The live feed works, but trading is not connected on Deriv's new API in this version. Charts and statistics work.", "bad"); return; }
     tr.token = t;
     el("token").value = "";
     trMsg("acct", "Connecting account...");
